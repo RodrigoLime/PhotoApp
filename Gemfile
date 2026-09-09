@@ -5,7 +5,15 @@ ruby '2.7.8'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails', branch: 'main'
 gem 'rails', '~> 6.1.7', '>= 6.1.7.10'
-# Use sqlite3 as the database for Active Record
+
+# Rails 6.1 needs json 2.x; json 3.0 removed the quirks_mode keyword it relies on
+gem 'json', '~> 2.6'
+
+gem 'devise'
+gem 'twitter-bootstrap-rails'
+gem 'devise-bootstrap-views'
+# twitter-bootstrap-rails' asset-pipeline JS requires jquery + jquery_ujs
+gem 'jquery-rails'
 
 # Use Puma as the app server
 gem 'puma', '~> 5.0'
