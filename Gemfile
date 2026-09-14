@@ -13,6 +13,11 @@ gem 'devise'
 gem 'twitter-bootstrap-rails'
 gem 'devise-bootstrap-views'
 gem 'stripe'
+gem 'carrierwave'
+gem 'mini_magick'
+# 'fog' (the meta-gem) pulls in every provider incl. fog-ovirt (needs libxml2) and fails to install.
+# Not needed for local dev — CarrierWave stores files on disk. For S3 in production, use 'fog-aws' only.
+# gem 'fog-aws'
 # twitter-bootstrap-rails' asset-pipeline JS requires jquery + jquery_ujs
 gem 'jquery-rails'
 
