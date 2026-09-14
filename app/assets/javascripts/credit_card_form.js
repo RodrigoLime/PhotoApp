@@ -1,49 +1,46 @@
-$(document).on('turbolinks:load', function() {
-  var show_error, stripeResponseHandler, submitHandler;
+function initCreditCardForm() {
+  var $form = $('.cc_form');
 
-  submitHandler = function (event) {
-    var $form = $(event.target);
-    $form.find("input[type=submit]").prop("disabled", true);
+  // Only run on pages that actually have the credit-card form
+  if ($form.length < 1) { return; }
 
-    // If Stripe was initialized correctly this will create a token using the credit card info
-    if (Stripe) {
-      Stripe.card.createToken($form, stripeResponseHandler);
-    } else {
-      show_error("Failed to load credit card processing functionality. Please reload this page in your browser.");
-    }
-    return false;
-  };
+  // Guard: if the Card Element is already mounted, don't mount a second one
+  if ($('#card-element').children().length > 0) { return; }
 
-  $(".cc_form").on('submit', submitHandler);
+  // Initialize Stripe with the publishable key we passed via the form's data attribute
+  var stripe = Stripe($form.data('stripe-key'));
 
-  stripeResponseHandler = function (status, response) {
-    var token, $form;
+  // Build a Card Element (Stripe renders the card fields inside a secure iframe)
+  var elements = stripe.elements();
+  var card = elements.create('card');
+  card.mount('#card-element');
 
-    $form = $('.cc_form');
+  // Live-display validation errors as the user types
+  card.on('change', function(event) {
+    $('#card-errors').text(event.error ? event.error.message : '');
+  });
 
-    if (response.error) {
-      console.log(response.error.message);
-      show_error(response.error.message);
-      $form.find("input[type=submit]").prop("disabled", false);
-    } else {
-      token = response.id;
-      $form.append($("<input type=\"hidden\" name=\"payment[token]\" />").val(token));
-      $("[data-stripe=number]").remove();
-      $("[data-stripe=cvc]").remove();
-      $("[data-stripe=exp-year]").remove();
-      $("[data-stripe=exp-month]").remove();
-      $("[data-stripe=label]").remove();
-      $form.get(0).submit();
-    }
-    return false;
-  };
+  $form.on('submit', function(event) {
+    // Stop the normal submit — we tokenize first, THEN submit
+    event.preventDefault();
+    $form.find('input[type=submit]').prop('disabled', true);
 
-  show_error = function (message) {
-    if ($("#flash-messages").length < 1) {
-      $('div.container.main div:first').prepend("<div id='flash-messages'></div>");
-    }
-    $("#flash-messages").html('<div class="alert alert-warning"><a class="close" data-dismiss="alert">×</a><div id="flash_alert">' + message + '</div></div>');
-    $('.alert').delay(5000).fadeOut(3000);
-    return false;
-  };
-})
+    stripe.createToken(card).then(function(result) {
+      if (result.error) {
+        // Card was declined / invalid — show the message and let them retry
+        $('#card-errors').text(result.error.message);
+        $form.find('input[type=submit]').prop('disabled', false);
+      } else {
+        // Success: attach the token as a hidden field, then submit for real
+        $('<input>').attr({ type: 'hidden', name: 'payment[token]' })
+                    .val(result.token.id)
+                    .appendTo($form);
+        $form.get(0).submit();
+      }
+    });
+  });
+}
+
+// jQuery 3's function-form ready (fires on DOM ready) + turbolinks:load if Turbolinks is ever added
+$(document).ready(initCreditCardForm);
+$(document).on('turbolinks:load', initCreditCardForm);
