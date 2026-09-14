@@ -12,6 +12,7 @@ gem 'json', '~> 2.6'
 gem 'devise'
 gem 'twitter-bootstrap-rails'
 gem 'devise-bootstrap-views'
+gem 'stripe'
 # twitter-bootstrap-rails' asset-pipeline JS requires jquery + jquery_ujs
 gem 'jquery-rails'
 
